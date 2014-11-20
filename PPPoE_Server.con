@@ -1,0 +1,70 @@
+service timestamps debug datetime msec localtime show-timezone
+service timestamps log datetime msec localtime show-timezone
+no service password-encryption
+!
+hostname pppoe-server
+!
+logging buffered 90000
+no logging console
+!
+aaa new-model
+!
+aaa authentication ppp default local
+aaa authorization network default local
+!
+ip routing
+ip cef
+!
+username pppoe-client password 0 cisco
+username pppoe-server password 0 cisco
+username user1 password 0 cisco
+!
+archive
+ log config
+  hidekeys
+!
+policy-map p2
+ class class-default
+  bandwidth percent 100 
+policy-map p1
+ class class-default
+  shape average 100000
+   service-policy p2
+!
+bba-group pppoe qos1
+ virtual-template 1
+!
+interface loopback 0
+ip address 192.168.0.1 255.255.255.255
+no shutdown
+!
+interface GigabitEthernet0/0
+ no ip address
+ pppoe enable group qos1
+ no shutdown
+!
+interface GigabitEthernet0/1
+ ip address 30.0.0.1 255.255.255.0
+ no shutdown
+!
+interface virtual-template1
+ip unnumbered loopback 0
+mtu 1492
+peer default ip address pool pool1
+ppp authentication chap
+!
+ip local pool pool1 192.168.1.2
+ip forward-protocol nd
+!
+no ip http server
+!
+line con 0
+ exec-timeout 0 0
+ length 0
+ stopbits 1
+line aux 0
+ exec-timeout 0 0
+ stopbits 1
+ speed 115200
+line vty 0 4
+end
